@@ -176,7 +176,7 @@ fn parse_duration(duration: &str) -> Result<Duration> {
 /// Contains Clap's app setup.
 fn parse_args() -> ArgMatches<'static> {
     App::new("ReWrk")
-        .version("0.3.1")
+        .version("0.3.3")
         .author("Harrison Burt <hburt2003@gmail.com>")
         .about("Benchmark HTTP/1 and HTTP/2 frameworks without pipelining bias.")
         .arg(
@@ -216,7 +216,7 @@ fn parse_args() -> ArgMatches<'static> {
         .arg(
             Arg::with_name("post")
                 .long("post")
-                .help("Set the POST data from a JSON encoded string e.g. '\"my-post-data\"'")
+                .help("Set the POST data using a file e.g. '--post ./my-data'")
                 .takes_value(true)
                 .required(false)
         )
