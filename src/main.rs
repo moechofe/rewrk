@@ -1,7 +1,11 @@
 extern crate clap;
 
+use std::str::FromStr;
+
 use anyhow::{Error, Result};
 use clap::{App, Arg, ArgMatches};
+//use ::http::{HeaderMap, HeaderValue, HeaderName};
+use ::http::header::{self, HeaderMap, HeaderName, HeaderValue};
 use regex::Regex;
 use tokio::time::Duration;
 
@@ -50,6 +54,25 @@ fn main() {
         },
     };
 
+    let headers: HeaderMap = match args.values_of("header") {
+        Some(v) => {
+            v.filter_map(|entry| {
+                let parts = entry.splitn(2, ":").collect::<Vec<&str>>();
+                if parts.len() == 2 { 
+                    let k = HeaderName::from_str(&parts[0]);
+                    let v = HeaderValue::from_str(&parts[1]);
+                    if let (Ok(k),Ok(v)) = (k,v) {
+                        Some((k,v))
+                    } else { None }
+                } else { None }
+            }).fold(HeaderMap::new(), |mut acc, (k,v)| {
+                acc.insert(k,v);
+                acc
+            })
+        }
+        None => HeaderMap::new()
+    };
+
     let http2: bool = args.is_present("http2");
     let json: bool = args.is_present("json");
 
@@ -80,6 +103,7 @@ fn main() {
         threads,
         connections: conns,
         host: host.to_string(),
+        headers: headers,
         bench_type,
         duration,
         display_percentile: pct,
@@ -165,6 +189,16 @@ fn parse_args() -> ArgMatches<'static> {
                 .help("Set the host to bench e.g. '-h http://127.0.0.1:5050'")
                 .takes_value(true)
                 .required(true),
+        )
+        .arg(
+            Arg::with_name("header")
+                .short("H")
+                .long("header")
+                .help("Add HTTP header e.g. 'Content-Type: application/json'")
+                .takes_value(true)
+                .multiple(true)
+                .required(false)
+                .min_values(0),
         )
         .arg(
             Arg::with_name("http2")

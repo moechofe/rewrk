@@ -4,6 +4,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use colored::*;
 use futures_util::StreamExt;
+use hyper::header::HeaderMap;
 
 use crate::results::WorkerResult;
 use crate::utils::div_mod;
@@ -21,6 +22,9 @@ pub struct BenchmarkSettings {
 
     /// The host connection / url.
     pub host: String,
+
+    /// The additional HTTP headers.
+    pub headers: HeaderMap,
 
     /// The bench mark type e.g. http1 only.
     pub bench_type: http::BenchType,
@@ -78,6 +82,7 @@ async fn run(settings: BenchmarkSettings) -> Result<()> {
         settings.duration,
         settings.connections,
         settings.host.clone(),
+        settings.headers.clone(),
         settings.bench_type,
         predict_size as usize,
     )

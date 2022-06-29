@@ -5,7 +5,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use futures_util::stream::FuturesUnordered;
 use futures_util::TryFutureExt;
-use http::header::{self, HeaderMap};
+use http::header::{self, HeaderMap, HeaderName};
 use http::Request;
 use hyper::client::conn::{self, SendRequest};
 use hyper::Body;
@@ -50,11 +50,12 @@ pub async fn start_tasks(
     time_for: Duration,
     connections: usize,
     uri_string: String,
+    headers_map: HeaderMap,
     bench_type: BenchType,
     _predicted_size: usize,
 ) -> anyhow::Result<FuturesUnordered<Handle>> {
     let deadline = Instant::now() + time_for;
-    let user_input = UserInput::new(bench_type, uri_string).await?;
+    let user_input = UserInput::new(bench_type, uri_string, headers_map).await?;
 
     let handles = FuturesUnordered::new();
 
@@ -88,7 +89,7 @@ async fn benchmark(
             Err(_elapsed) => return Ok(WorkerResult::default()),
         };
 
-    let mut request_headers = HeaderMap::new();
+    let mut request_headers = user_input.headers.clone();
 
     // Set "host" header for HTTP/1.
     if bench_type.is_http1() {
