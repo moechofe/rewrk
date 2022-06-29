@@ -4,10 +4,10 @@ use std::str::FromStr;
 
 use anyhow::{Error, Result};
 use clap::{App, Arg, ArgMatches};
-//use ::http::{HeaderMap, HeaderValue, HeaderName};
-use ::http::header::{self, HeaderMap, HeaderName, HeaderValue};
+use ::http::header::{HeaderMap, HeaderName, HeaderValue};
 use regex::Regex;
 use tokio::time::Duration;
+use std::io::prelude::*;
 
 mod bench;
 mod http;
@@ -73,6 +73,18 @@ fn main() {
         None => HeaderMap::new()
     };
 
+    let post: String = match args.value_of("post") {
+        Some(v) => {
+            let file = std::fs::File::open(v);
+            let mut contents = String::new();
+            if let Ok(mut file) = file {
+                let _ = file.read_to_string(&mut contents);
+            }
+            contents
+        },
+        _ => String::new()
+    };
+
     let http2: bool = args.is_present("http2");
     let json: bool = args.is_present("json");
 
@@ -103,7 +115,8 @@ fn main() {
         threads,
         connections: conns,
         host: host.to_string(),
-        headers: headers,
+        headers,
+        post: post.to_owned(),
         bench_type,
         duration,
         display_percentile: pct,
@@ -199,6 +212,13 @@ fn parse_args() -> ArgMatches<'static> {
                 .multiple(true)
                 .required(false)
                 .min_values(0),
+        )
+        .arg(
+            Arg::with_name("post")
+                .long("post")
+                .help("Set the POST data from a JSON encoded string e.g. '\"my-post-data\"'")
+                .takes_value(true)
+                .required(false)
         )
         .arg(
             Arg::with_name("http2")

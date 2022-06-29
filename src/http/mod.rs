@@ -5,7 +5,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use futures_util::stream::FuturesUnordered;
 use futures_util::TryFutureExt;
-use http::header::{self, HeaderMap, HeaderName};
+use http::header::{self, HeaderMap};
 use http::Request;
 use hyper::client::conn::{self, SendRequest};
 use hyper::Body;
@@ -51,11 +51,12 @@ pub async fn start_tasks(
     connections: usize,
     uri_string: String,
     headers_map: HeaderMap,
+    post: String,
     bench_type: BenchType,
     _predicted_size: usize,
 ) -> anyhow::Result<FuturesUnordered<Handle>> {
     let deadline = Instant::now() + time_for;
-    let user_input = UserInput::new(bench_type, uri_string, headers_map).await?;
+    let user_input = UserInput::new(bench_type, uri_string, headers_map, post).await?;
 
     let handles = FuturesUnordered::new();
 
@@ -102,8 +103,17 @@ async fn benchmark(
     // Benchmark loop.
     // Futures must not be awaited without timeout.
     loop {
+        // Create a body for POST.
+        let mut body = Body::empty();
+        if user_input.post.len() > 0 {
+            body = Body::from(user_input.post.to_owned());
+        };
+
         // Create request from **parsed** data.
-        let mut request = Request::new(Body::empty());
+        let mut request = Request::new(body);
+        if user_input.post.len() > 0 {
+            *request.method_mut() = http::Method::POST;
+        }
         *request.uri_mut() = user_input.uri.clone();
         *request.headers_mut() = request_headers.clone();
 

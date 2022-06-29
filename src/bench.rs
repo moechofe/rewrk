@@ -26,6 +26,9 @@ pub struct BenchmarkSettings {
     /// The additional HTTP headers.
     pub headers: HeaderMap,
 
+    /// Will read POST data from stdin.
+    pub post: String,
+
     /// The bench mark type e.g. http1 only.
     pub bench_type: http::BenchType,
 
@@ -83,6 +86,7 @@ async fn run(settings: BenchmarkSettings) -> Result<()> {
         settings.connections,
         settings.host.clone(),
         settings.headers.clone(),
+        settings.post,
         settings.bench_type,
         predict_size as usize,
     )
