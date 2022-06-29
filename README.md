@@ -1,3 +1,8 @@
+### My changes:
+
+1. Allow to set headers from the command line.
+2. Allow to set POST data from the command line using an external file.
+
 # rewrk
 A more modern http framework benchmark utility.
 
